@@ -20,6 +20,8 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 foto_url TEXT,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS subcategoria TEXT;
+            ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS color TEXT;
         `);
         res.json({ exito: true, mensaje: "¡Magia pura! Estructura de Grupo PVF lista." });
     } catch (err) {
