@@ -49,22 +49,23 @@ router.get('/instalar-base-de-datos', async (req, res) => {
     }
 });
 
-// RUTAS PARA SUPLIDORES
-router.get('/suplidores', async (req, res) => {
-    const result = await db.query('SELECT * FROM suplidores ORDER BY nombre_social ASC');
-    res.json(result.rows);
-});
-
+// RUTA PARA GUARDAR SUPLIDORES (MEJORADA)
 router.post('/suplidores', async (req, res) => {
-    const { nombre, rnc, contacto, tel, email, dir } = req.body;
+    const { nombre, rnc, contacto, tel, email, direccion } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO suplidores (nombre_social, rnc, contacto_nombre, telefono, email, direccion) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [nombre, rnc, contacto, tel, email, dir]
+            `INSERT INTO suplidores (nombre_social, rnc, contacto_nombre, telefono, email, direccion) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [nombre, rnc, contacto, tel, email, direccion]
         );
         res.json({ exito: true, suplidor: result.rows[0] });
     } catch (err) {
-        res.status(500).json({ exito: false, error: err.message });
+        console.error("Error en Suplidor:", err.message);
+        // Error específico si el RNC ya existe
+        if (err.code === '23505') {
+            return res.status(400).json({ exito: false, error: "El RNC ya está registrado para otro suplidor." });
+        }
+        res.status(500).json({ exito: false, error: "Error interno: " + err.message });
     }
 });
 
