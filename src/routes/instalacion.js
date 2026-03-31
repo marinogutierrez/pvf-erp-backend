@@ -47,28 +47,23 @@ router.get('/instalar-base-de-datos', async (req, res) => {
     }
 });
 
-// 2. RUTAS PARA SUPLIDORES
-router.get('/suplidores', async (req, res) => {
-    try {
-        const result = await db.query('SELECT * FROM suplidores ORDER BY nombre_social ASC');
-        res.json(result.rows);
-    } catch (err) { res.status(500).json([]); }
-});
-
+// RUTA PARA GUARDAR SUPLIDORES
 router.post('/suplidores', async (req, res) => {
     const { nombre, rnc, contacto, tel, email, direccion } = req.body;
+    console.log("Recibiendo suplidor:", nombre); // Esto aparecerá en los logs de Render
+    
     try {
         const result = await db.query(
             `INSERT INTO suplidores (nombre_social, rnc, contacto_nombre, telefono, email, direccion) 
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [nombre, rnc, contacto, tel, email, direccion]
+            [nombre, rnc, contacto, tel, email, direccion || '']
         );
         res.json({ exito: true, suplidor: result.rows[0] });
     } catch (err) {
+        console.error("Error al guardar suplidor:", err.message);
         res.status(500).json({ exito: false, error: err.message });
     }
 });
-
 // 3. RUTAS PARA PRODUCTOS
 router.get('/ver-inventario', async (req, res) => {
     try {
