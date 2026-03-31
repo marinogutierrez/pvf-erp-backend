@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// 1. INSTALACIÓN / RESETEO (Actualizado para Suplidores y Servicios)
+// RUTA DE RESETEO Y CREACIÓN (ACTUALIZADA)
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
         await db.query(`DROP TABLE IF EXISTS catalogo_maestro CASCADE;`);
         await db.query(`DROP TABLE IF EXISTS suplidores CASCADE;`);
 
-        // Tabla de Suplidores (Estándar RD)
+        // Tabla de Suplidores (Estructura para R.D.)
         await db.query(`
             CREATE TABLE suplidores (
                 id SERIAL PRIMARY KEY,
@@ -22,11 +22,11 @@ router.get('/instalar-base-de-datos', async (req, res) => {
             );
         `);
 
-        // Tabla Maestra Actualizada
+        // Tabla Maestra con Tipo de Item y Suplidor
         await db.query(`
             CREATE TABLE catalogo_maestro (
                 id SERIAL PRIMARY KEY,
-                item_tipo TEXT DEFAULT 'PRODUCTO', -- PRODUCTO o SERVICIO
+                item_tipo TEXT DEFAULT 'PRODUCTO',
                 categoria TEXT,
                 subcategoria TEXT,
                 marca TEXT,
@@ -43,13 +43,13 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        res.json({ exito: true, mensaje: "Sistema actualizado: Suplidores y Tipos de Item listos." });
+        res.json({ exito: true, mensaje: "Sistema Grupo PVF actualizado con Suplidores y Tipos." });
     } catch (err) {
         res.status(500).json({ exito: false, error: err.message });
     }
 });
 
-// 2. RUTAS PARA SUPLIDORES
+// RUTAS PARA SUPLIDORES
 router.get('/suplidores', async (req, res) => {
     const result = await db.query('SELECT * FROM suplidores ORDER BY nombre_social ASC');
     res.json(result.rows);
@@ -68,7 +68,7 @@ router.post('/suplidores', async (req, res) => {
     }
 });
 
-// 3. RUTA PARA GUARDAR PRODUCTOS (Actualizada)
+// RUTA PARA GUARDAR PRODUCTOS (ACTUALIZADA)
 router.post('/productos', async (req, res) => {
     const { item_tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, numeroSerie, estatus, condicion, suplidor_id, fotoUrl } = req.body;
     try {
