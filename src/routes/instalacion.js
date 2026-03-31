@@ -2,13 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// RUTA DE RESETEO Y CREACIÓN (ACTUALIZADA)
+// 1. RUTA DE INSTALACIÓN (Borra y crea todo de nuevo)
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
         await db.query(`DROP TABLE IF EXISTS catalogo_maestro CASCADE;`);
         await db.query(`DROP TABLE IF EXISTS suplidores CASCADE;`);
 
-        // Tabla de Suplidores (Estructura para R.D.)
         await db.query(`
             CREATE TABLE suplidores (
                 id SERIAL PRIMARY KEY,
@@ -22,7 +21,6 @@ router.get('/instalar-base-de-datos', async (req, res) => {
             );
         `);
 
-        // Tabla Maestra con Tipo de Item y Suplidor
         await db.query(`
             CREATE TABLE catalogo_maestro (
                 id SERIAL PRIMARY KEY,
@@ -43,13 +41,20 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        res.json({ exito: true, mensaje: "Sistema Grupo PVF actualizado con Suplidores y Tipos." });
+        res.json({ exito: true, mensaje: "Sistema Grupo PVF Reiniciado con Éxito." });
     } catch (err) {
         res.status(500).json({ exito: false, error: err.message });
     }
 });
 
-// RUTA PARA GUARDAR SUPLIDORES (MEJORADA)
+// 2. RUTAS PARA SUPLIDORES
+router.get('/suplidores', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM suplidores ORDER BY nombre_social ASC');
+        res.json(result.rows);
+    } catch (err) { res.status(500).json([]); }
+});
+
 router.post('/suplidores', async (req, res) => {
     const { nombre, rnc, contacto, tel, email, direccion } = req.body;
     try {
@@ -60,16 +65,25 @@ router.post('/suplidores', async (req, res) => {
         );
         res.json({ exito: true, suplidor: result.rows[0] });
     } catch (err) {
-        console.error("Error en Suplidor:", err.message);
-        // Error específico si el RNC ya existe
-        if (err.code === '23505') {
-            return res.status(400).json({ exito: false, error: "El RNC ya está registrado para otro suplidor." });
-        }
-        res.status(500).json({ exito: false, error: "Error interno: " + err.message });
+        res.status(500).json({ exito: false, error: err.message });
     }
 });
 
-// RUTA PARA GUARDAR PRODUCTOS (ACTUALIZADA)
+// 3. RUTAS PARA PRODUCTOS
+router.get('/ver-inventario', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT c.*, s.nombre_social as suplidor_nombre 
+            FROM catalogo_maestro c 
+            LEFT JOIN suplidores s ON c.suplidor_id = s.id 
+            ORDER BY c.fecha_creacion DESC
+        `);
+        res.json({ exito: true, datos: result.rows });
+    } catch (err) {
+        res.status(500).json({ exito: false, error: err.message });
+    }
+});
+
 router.post('/productos', async (req, res) => {
     const { item_tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, numeroSerie, estatus, condicion, suplidor_id, fotoUrl } = req.body;
     try {
@@ -79,7 +93,7 @@ router.post('/productos', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *;
         `;
-        const values = [item_tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, numeroSerie, estatus, condicion, suplidor_id, fotoUrl];
+        const values = [item_tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, numeroSerie, estatus, condicion, suplidor_id || null, fotoUrl];
         const result = await db.query(query, values);
         res.json({ exito: true, producto: result.rows[0] });
     } catch (err) {
