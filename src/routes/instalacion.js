@@ -35,7 +35,7 @@ router.get('/instalar-base-de-datos', async (req, res) => {
 
 // RUTA PARA GUARDAR PRODUCTOS (POST)
 router.post('/productos', async (req, res) => {
-    // Extraemos los datos que vienen del formulario
+    // Extraemos los nombres tal cual los envía el JavaScript de tu index.html
     const { tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl } = req.body;
     
     try {
@@ -45,9 +45,11 @@ router.post('/productos', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *;
         `;
+        // Mapeamos 'costo' del formulario a 'costo_base_usd' de la tabla
         const values = [tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl];
         
         const result = await db.query(query, values);
+        console.log("Producto guardado:", result.rows[0]);
         res.json({ exito: true, producto: result.rows[0] });
     } catch (err) {
         console.error("Error al insertar:", err);
