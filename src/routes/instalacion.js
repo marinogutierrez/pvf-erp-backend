@@ -1,9 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../config/db');
+
+// RUTA DE INSTALACIÓN Y RESETEO
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
-        // 1. ELIMINAMOS LA TABLA VIEJA (BORRÓN Y CUENTA NUEVA)
+        // 1. LIMPIEZA TOTAL: Borramos la tabla vieja si existe
         await db.query(`DROP TABLE IF EXISTS catalogo_maestro;`);
 
-        // 2. CREAMOS LA TABLA PERFECTA DESDE CERO
+        // 2. CREACIÓN DESDE CERO: Con todos los campos que Grupo PVF necesita
         await db.query(`
             CREATE TABLE catalogo_maestro (
                 id SERIAL PRIMARY KEY,
@@ -21,26 +26,16 @@ router.get('/instalar-base-de-datos', async (req, res) => {
             );
         `);
 
-        res.json({ exito: true, mensaje: "¡TABLA RESETEADA! Todo está limpio y listo para recibir datos." });
+        res.json({ exito: true, mensaje: "¡TABLA RESETEADA! El sistema está limpio y listo para recibir datos." });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ exito: false, error: err.message });
     }
 });
 
-        // 2. FORZAMOS la creación de las columnas nuevas por si la tabla ya existía
-        await db.query(`ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS subcategoria TEXT;`);
-        await db.query(`ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS color TEXT;`);
-
-        res.json({ exito: true, mensaje: "¡Estructura actualizada! Subcategoría y Color añadidos correctamente." });
-    } catch (err) {
-        res.status(500).json({ exito: false, error: err.message });
-    }
-});
-
-// RUTA 2: LA NUEVA - Recibir datos del Formulario
+// RUTA PARA GUARDAR PRODUCTOS
 router.post('/productos', async (req, res) => {
     const { tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl } = req.body;
-
     try {
         const query = `
             INSERT INTO catalogo_maestro 
@@ -49,7 +44,6 @@ router.post('/productos', async (req, res) => {
             RETURNING *;
         `;
         const values = [tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl];
-        
         const result = await db.query(query, values);
         res.json({ exito: true, producto: result.rows[0] });
     } catch (err) {
