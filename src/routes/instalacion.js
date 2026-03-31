@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// 1. RUTA DE INSTALACIÓN (Borra y crea todo de nuevo)
+// 1. RUTA PARA LIMPIAR Y CREAR TABLAS (Mantenimiento)
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
         await db.query(`DROP TABLE IF EXISTS catalogo_maestro CASCADE;`);
@@ -41,30 +41,38 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        res.json({ exito: true, mensaje: "Sistema Grupo PVF Reiniciado con Éxito." });
+        res.json({ exito: true, mensaje: "Base de Datos de Grupo PVF Reiniciada Correctamente." });
     } catch (err) {
         res.status(500).json({ exito: false, error: err.message });
     }
 });
 
-// RUTA PARA GUARDAR SUPLIDORES
+// 2. RUTA PARA OBTENER LA LISTA DE SUPLIDORES (GET)
+router.get('/suplidores', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM suplidores ORDER BY nombre_social ASC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: "Error al cargar suplidores" });
+    }
+});
+
+// 3. RUTA PARA GUARDAR UN NUEVO SUPLIDOR (POST)
 router.post('/suplidores', async (req, res) => {
     const { nombre, rnc, contacto, tel, email, direccion } = req.body;
-    console.log("Recibiendo suplidor:", nombre); // Esto aparecerá en los logs de Render
-    
     try {
         const result = await db.query(
             `INSERT INTO suplidores (nombre_social, rnc, contacto_nombre, telefono, email, direccion) 
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [nombre, rnc, contacto, tel, email, direccion || '']
+            [nombre, rnc, contacto, tel, email, direccion]
         );
         res.json({ exito: true, suplidor: result.rows[0] });
     } catch (err) {
-        console.error("Error al guardar suplidor:", err.message);
         res.status(500).json({ exito: false, error: err.message });
     }
 });
-// 3. RUTAS PARA PRODUCTOS
+
+// 4. RUTA PARA VER EL INVENTARIO COMPLETO (GET)
 router.get('/ver-inventario', async (req, res) => {
     try {
         const result = await db.query(`
@@ -79,6 +87,7 @@ router.get('/ver-inventario', async (req, res) => {
     }
 });
 
+// 5. RUTA PARA GUARDAR UN PRODUCTO O SERVICIO (POST)
 router.post('/productos', async (req, res) => {
     const { item_tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, numeroSerie, estatus, condicion, suplidor_id, fotoUrl } = req.body;
     try {
