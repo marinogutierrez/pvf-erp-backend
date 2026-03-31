@@ -1,13 +1,11 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../config/db');
-
-// RUTA 1: La que ya tenías para crear las tablas (Instalación)
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
-        // 1. Intentamos crear la tabla por si no existe
+        // 1. ELIMINAMOS LA TABLA VIEJA (BORRÓN Y CUENTA NUEVA)
+        await db.query(`DROP TABLE IF EXISTS catalogo_maestro;`);
+
+        // 2. CREAMOS LA TABLA PERFECTA DESDE CERO
         await db.query(`
-            CREATE TABLE IF NOT EXISTS catalogo_maestro (
+            CREATE TABLE catalogo_maestro (
                 id SERIAL PRIMARY KEY,
                 tipo TEXT,
                 categoria TEXT,
@@ -22,6 +20,12 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
+
+        res.json({ exito: true, mensaje: "¡TABLA RESETEADA! Todo está limpio y listo para recibir datos." });
+    } catch (err) {
+        res.status(500).json({ exito: false, error: err.message });
+    }
+});
 
         // 2. FORZAMOS la creación de las columnas nuevas por si la tabla ya existía
         await db.query(`ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS subcategoria TEXT;`);
