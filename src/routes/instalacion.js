@@ -55,4 +55,13 @@ router.post('/productos', async (req, res) => {
     }
 });
 
+// RUTA PARA VER TODO EL INVENTARIO
+router.get('/ver-inventario', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM catalogo_maestro ORDER BY fecha_creacion DESC');
+        res.json({ exito: true, datos: result.rows });
+    } catch (err) {
+        res.status(500).json({ exito: false, error: err.message });
+    }
+});
 module.exports = router;
