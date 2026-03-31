@@ -106,3 +106,19 @@ router.post('/productos', async (req, res) => {
 });
 
 module.exports = router;
+// 6. RUTA PARA EDITAR UN ITEM (PUT)
+router.put('/editar-producto/:id', async (req, res) => {
+    const { id } = req.params;
+    const { categoria, subcategoria, marca, modelo, costo, numero_serie, estatus, condicion } = req.body;
+    try {
+        await db.query(
+            `UPDATE catalogo_maestro 
+             SET categoria=$1, subcategoria=$2, marca=$3, modelo=$4, costo_base_usd=$5, numero_serie=$6, estatus=$7, condicion=$8
+             WHERE id=$9`,
+            [categoria, subcategoria, marca, modelo, costo, numero_serie, estatus, condicion, id]
+        );
+        res.json({ exito: true, mensaje: "Item actualizado correctamente" });
+    } catch (err) {
+        res.status(500).json({ exito: false, error: err.message });
+    }
+});
