@@ -5,6 +5,7 @@ const db = require('../config/db');
 // RUTA 1: La que ya tenías para crear las tablas (Instalación)
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
+        // 1. Intentamos crear la tabla por si no existe
         await db.query(`
             CREATE TABLE IF NOT EXISTS catalogo_maestro (
                 id SERIAL PRIMARY KEY,
@@ -20,10 +21,13 @@ router.get('/instalar-base-de-datos', async (req, res) => {
                 foto_url TEXT,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-            ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS subcategoria TEXT;
-            ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS color TEXT;
         `);
-        res.json({ exito: true, mensaje: "¡Magia pura! Estructura de Grupo PVF lista." });
+
+        // 2. FORZAMOS la creación de las columnas nuevas por si la tabla ya existía
+        await db.query(`ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS subcategoria TEXT;`);
+        await db.query(`ALTER TABLE catalogo_maestro ADD COLUMN IF NOT EXISTS color TEXT;`);
+
+        res.json({ exito: true, mensaje: "¡Estructura actualizada! Subcategoría y Color añadidos correctamente." });
     } catch (err) {
         res.status(500).json({ exito: false, error: err.message });
     }
