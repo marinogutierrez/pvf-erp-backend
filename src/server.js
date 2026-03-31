@@ -1,16 +1,20 @@
 const express = require('express');
+const cors = require('cors'); // El permiso para tu Mac
 const app = express();
-const rutaInstalacion = require('./routes/instalacion'); // <-- LÍNEA NUEVA
+const port = process.env.PORT || 3000;
 
-const PUERTO = process.env.PORT || 3000;
+// MIDDLEWARES (Las reglas de la casa)
+app.use(cors()); // Permite que el Dashboard hable con la API
+app.use(express.json()); // Permite leer los datos que enviamos desde el formulario
 
-app.get('/api/health', (req, res) => {
-    res.json({ estatus: 'Online', empresa: 'Grupo PVF ERP API', version: '1.0.0' });
+// RUTAS
+const rutasInstalacion = require('./routes/instalacion');
+app.use('/api', rutasInstalacion);
+
+app.get('/', (req, res) => {
+    res.send('Servidor de Grupo PVF Operativo 🚀');
 });
 
-// Registrar la ruta secreta de instalación
-app.use('/api/instalar-base-de-datos', rutaInstalacion); // <-- LÍNEA NUEVA
-
-app.listen(PUERTO, () => {
-    console.log(`Servidor de Grupo PVF encendido en el puerto ${PUERTO}`);
+app.listen(port, () => {
+    console.log(`Servidor corriendo en puerto ${port}`);
 });
