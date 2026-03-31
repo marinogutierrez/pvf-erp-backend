@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-// RUTA DE INSTALACIÓN Y RESETEO
+// RUTA DE INSTALACIÓN Y RESETEO TOTAL
 router.get('/instalar-base-de-datos', async (req, res) => {
     try {
-        // 1. LIMPIEZA TOTAL: Borramos la tabla vieja si existe
-        await db.query(`DROP TABLE IF EXISTS catalogo_maestro;`);
+        // 1. LIMPIEZA CON CASCADA: Borra la tabla y cualquier dependencia (llaves foráneas, etc.)
+        await db.query(`DROP TABLE IF EXISTS catalogo_maestro CASCADE;`);
 
-        // 2. CREACIÓN DESDE CERO: Con todos los campos que Grupo PVF necesita
+        // 2. CREACIÓN DESDE CERO
         await db.query(`
             CREATE TABLE catalogo_maestro (
                 id SERIAL PRIMARY KEY,
@@ -26,16 +26,18 @@ router.get('/instalar-base-de-datos', async (req, res) => {
             );
         `);
 
-        res.json({ exito: true, mensaje: "¡TABLA RESETEADA! El sistema está limpio y listo para recibir datos." });
+        res.json({ exito: true, mensaje: "¡TABLA RESETEADA CON CASCADA! El sistema está totalmente limpio." });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ exito: false, error: err.message });
+        res.status(500).json({ exito: false, error: "Error en reseteo: " + err.message });
     }
 });
 
-// RUTA PARA GUARDAR PRODUCTOS
+// RUTA PARA GUARDAR PRODUCTOS (POST)
 router.post('/productos', async (req, res) => {
+    // Extraemos los datos que vienen del formulario
     const { tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl } = req.body;
+    
     try {
         const query = `
             INSERT INTO catalogo_maestro 
@@ -44,11 +46,12 @@ router.post('/productos', async (req, res) => {
             RETURNING *;
         `;
         const values = [tipo, categoria, subcategoria, marca, modelo, color, costo, descripcion, requiereSerie, fotoUrl];
+        
         const result = await db.query(query, values);
         res.json({ exito: true, producto: result.rows[0] });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ exito: false, error: "Error al guardar: " + err.message });
+        console.error("Error al insertar:", err);
+        res.status(500).json({ exito: false, error: "Error al guardar en BD: " + err.message });
     }
 });
 
