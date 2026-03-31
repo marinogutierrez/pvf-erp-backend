@@ -1,11 +1,9 @@
 const { Pool } = require('pg');
 
-// Conectamos usando la llave secreta que pusimos en Render
+// Conectamos usando la llave secreta de Render
+// Al ser una URL Interna, no requiere SSL, ya es una red privada.
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // Esto es obligatorio por seguridad en la nube
-    }
+    connectionString: process.env.DATABASE_URL
 });
 
 // Prueba de conexión
