@@ -58,5 +58,15 @@ router.get('/ver-inventario', async (req, res) => {
         res.status(500).json({ exito: false, error: err.message });
     }
 });
-
+// 4. RUTA PARA ELIMINAR UN PRODUCTO (DELETE)
+router.delete('/eliminar-producto/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM catalogo_maestro WHERE id = $1', [id]);
+        res.json({ exito: true, mensaje: "Equipo eliminado correctamente." });
+    } catch (err) {
+        console.error("Error al eliminar:", err);
+        res.status(500).json({ exito: false, error: err.message });
+    }
+});
 module.exports = router;
